@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"aggelos.com/go/aoc/ex15/utils"
+	"aggelos.com/go/aoc/ex17/utils"
 )
 
 

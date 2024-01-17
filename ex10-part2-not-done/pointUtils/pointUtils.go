@@ -11,6 +11,11 @@ type Point struct {
 	Symbol string
 }
 
+
+func (p Point) CrossPoints(p2 Point) int {
+	return p.X * p2.Y - p.Y * p2.X
+}
+
 func (p Point) ToKey() string {
 	return fmt.Sprintf("(%d-%d)", p.X, p.Y)
 }
@@ -147,19 +152,6 @@ func (l Line) GetBorderPoints() []BorderPoint {
 	return borderPoints
 }
 
-var cases = map[string]string {
-	"-7": "DOWN",
-	"-J": "UP",
-
-	"-L": "UP",
-	"-F": "DOWN",
-	
-	"|7": "LEFT",
-	"|F": "RIGHT",
-
-	"|J": "LEFT",
-	"|L": "RIGHT",
-}
 
 var TurningPoints = map[string]struct{} {
 	"7" : {},
@@ -168,75 +160,3 @@ var TurningPoints = map[string]struct{} {
 	"L" : {},
 	"S" : {},
 }
-/*
-func (l Line) GetDirs() [][]string {
-	dirs := [][]string {}
-
-
-	firstPoint := currentLine[0]
-	lastPoint := currentPoint
-
-
-	start := data[firstPoint.X][firstPoint.Y]
-	middle := data[currentLine[1].X][currentLine[1].Y]
-	end := data[lastPoint.X][lastPoint.Y]
-
-
-	// case where we find 2 angles in a row //  TODO 
-	if len(currentLine) == 2 {
-		if start == "L" {
-			if end == "J" || end == "7" {
-				middle = "-"
-			} else {
-				middle = "|"
-			}
-		} else if start == "J" {
-			if end == "L" || end == "F" {
-				middle = "-"
-			} else {
-				middle = "|"
-			}
-		}else if start == "F" {
-			if end == "J" || end == "7" {
-				middle = "-"
-			} else {
-				middle = "|"
-			}
-		}else if start == "7" {
-			if end == "L" || end == "F" {
-				middle = "-"
-			} else {
-				middle = "|"
-			}
-		}
-	}
-
-	currentCase := start + middle + end
-	return dirs
-}
-
-
-
-func (l Line) ToBorderLine() []BorderPoints {
-	dir, _ :=  caseToDir[currentCase]
-	offset, _ := pointUtils.DirectionsToOffset[dir]
-
-	for _, point := range currentLine {
-		currentBP := pointUtils.BorderPoint{Point: point, In: []pointUtils.Point{}}
-		//Handle first and last point 
-		// add 1 more in point to them 
-		for _, offset := range offsets {
-			inPoint := pointUtils.Point{X: offset.X + point.X, Y: offset.Y + point.Y}
-			currentBP.In = append(currentBP.In, inPoint)
-		}
-		bordersWithDirs.Points[point.ToKey()] = currentBP
-	}
-
-	return 
-}
-
-
-
-
-
-*/

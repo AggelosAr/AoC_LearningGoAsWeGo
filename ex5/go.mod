@@ -1,3 +1,3 @@
-module aggelos.com/go/aoc/ex4
+module aggelos.com/go/aoc/ex5
 
 go 1.21.4
