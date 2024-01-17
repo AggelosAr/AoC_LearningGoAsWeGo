@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"container/list"
 	"errors"
 	"fmt"
 )
@@ -48,7 +47,6 @@ func GetNewModulesMap(sources []string, destinations [][]string) Modules {
 }
 
 func (m Modules) PrintModules() {
-
 	for name, module := range m.Modules {
 		fmt.Println("MODULE : ", name)
 		fmt.Println("DATA : ", module)
@@ -84,7 +82,6 @@ func getNewModule(name string, destinations []string) Module {
 			module.Name = name[1:]
 			newMemory := map[string]Signal {}
 			module.ModuleInterface = &Conjunction{Memory: newMemory}
-			
 		case "%":
 			module.Name = name[1:]
 			module.ModuleInterface = &FlipFlop{}
@@ -95,7 +92,6 @@ func getNewModule(name string, destinations []string) Module {
 	
 	return module
 }
-
 
 
 // Conjunction modules (prefix &)
@@ -115,7 +111,6 @@ func (c *Conjunction) UpdateMemory(inputModule string) {
 
 func (c *Conjunction) Send(pulse Signal, args ...interface{}) (Signal, error) {
 	
-
 	inputName := args[0].(string) // !
 
 	newSignal := Signal{Status: Low}
@@ -219,39 +214,3 @@ func (s *Signal) Flip() {
 }
 
 
-//DELETE THIS
-type SendType struct {
-	Signal Signal
-	Name string
-}
-
-type PQ struct {
-	List *list.List
-}
-
-func (q *PQ) HasNext() bool {
-
-	return q.List.Len() > 0
-}
-
-func GetNewQ() *PQ {
-	return &PQ{List: list.New()}
-}
-
-func (q *PQ) Add(v SendType) {
-
-	q.List.PushBack(v)
-}
-
-func (q *PQ) PopLeft() (SendType, error){
-
-	if q.List.Len() == 0 {
-		return SendType{}, errors.New("Q empty")
-	}
-
-	element  := q.List.Front()
-	value  := element.Value.(SendType)
-	q.List.Remove(element)
-
-	return value, nil
-} 

@@ -16,38 +16,24 @@ func main() {
 
 	modules := getData()
 	
-	
-
 	start := time.Now()
 	part1result := solvePart1(modules)
 	elapsed := time.Since(start)
 	fmt.Printf("Time took %s\n", elapsed)
 	fmt.Println("PART1 - RESULT - ", part1result)
 	
-
-	/*
 	start = time.Now()
-	part2result := solvePart2(signals)
+	part2result := solvePart2()
 	elapsed = time.Since(start)
 	fmt.Printf("Time took %s\n", elapsed)
 	fmt.Println("PART2 - RESULT - ", part2result)
 	
-	isDefaultTestCase := true
 
-	if isDefaultTestCase {
-		if part1result == 0 && part2result == 0 {
-			fmt.Println(" G O O D ")
-		} else {
-			fmt.Println(" B A D ")
-		}
+	if part1result == 703315117 && part2result == 0 {
+		fmt.Println(" G O O D ")
 	} else {
-		if part1result == 0 && part2result == 0 {
-			fmt.Println(" G O O D ")
-		} else {
-			fmt.Println(" B A D ")
-		}
+		fmt.Println(" B A D ")
 	}
-	*/
 }
 
 
@@ -98,8 +84,6 @@ func strip(text string) string {
 }
 
 
-
-
 func solvePart1(modules utils.Modules) int {
 
 	name := "broadcaster"
@@ -116,21 +100,48 @@ func solvePart1(modules utils.Modules) int {
 		highPulses += currHighPulses
 	}
 
-	fmt.Println("LOW -> ", lowPulses)
-	fmt.Println("HIGH -> ", highPulses)
-	
 	return lowPulses * highPulses
 }
 
+//2nd example out of order ?!?!?maybe
+// recurse in reverse
+func solvePart2() int {
+	
+	name := "broadcaster"
+	signal := utils.NewSignal("low")
+	
+	modules := getData()
+	btmPresses := 0
+	
+	for {
+		//modules := getData()
+		status := handleBtnPress2(signal, name, &modules)
+		btmPresses += 1
+		if status {
+			break
+		}
+	}
 
-func solvePart2(modules utils.Modules) int {
-	result := 0	
-	return result
+	fmt.Println("PRESSES -> ", btmPresses)
+	return btmPresses
 }
 
 
+
+
+
+func updateCounts(lowPulses, hightPulses *int, pulse utils.Signal) {
+
+	if pulse.Status == utils.Low {
+		*lowPulses++
+	} else {
+		*hightPulses++
+	}
+}
+
+
+
 func handleBtnPress(signal utils.Signal, moduleName string, modules utils.Modules) (int, int) {
-	
 	
 	lowPulses := 0
 	highPulses := 0
@@ -147,8 +158,8 @@ func handleBtnPress(signal utils.Signal, moduleName string, modules utils.Module
 	for _, nextModuleName := range module.Destinations {
 
 		nextModule, err := modules.Get(nextModuleName)
-		updateCounts(&lowPulses, &highPulses, signal)
 		//fmt.Printf(" <%s> -%s-> <%s>\n",moduleName, signal.Status, nextModuleName)
+		updateCounts(&lowPulses, &highPulses, signal)
 		if err != nil {
 			continue
 		}
@@ -183,74 +194,55 @@ func handleBtnPress(signal utils.Signal, moduleName string, modules utils.Module
 }
 
 
-func updateCounts(lowPulses, hightPulses *int, pulse utils.Signal) {
-
-	if pulse.Status == utils.Low {
-		*lowPulses++
-	} else {
-		*hightPulses++
+func handleBtnPress2(signal utils.Signal, moduleName string, modules *utils.Modules) bool {
+	
+	// stopping conditions
+	module, err := modules.Get(moduleName)
+	if err != nil {
+		return false
 	}
-}
+	
+	nextSignals := []utils.Signal {}
+	nextModuleNames := []string {}
+	for _, nextModuleName := range module.Destinations {
 
-
-
-//DELETE THIS
-// returns the steps, all the borders found
-// returns the steps, all the borders found
-func runBFS(modules utils.Modules) (int, int) {
-
-	lowPulses := 0
-	highPulses := 0
-
-	name := "broadcaster"
-	signal := utils.NewSignal("low")
-
-	sendData := utils.SendType{Signal: signal, Name:name}
-
-	q := utils.GetNewQ()
-	q.Add(sendData)
-
-	for q.HasNext() {
-
-		nextQ :=  utils.GetNewQ()
-
-		for q.HasNext() {
-
-			data, err := q.PopLeft()
-			if err != nil {
-				break
-			}
-
-			moduleName := data.Name
-			signal := data.Signal
-
-			fmt.Println("MODULE -> ", moduleName)
-
-			module, err := modules.Get(moduleName)
-			if err != nil {
-				continue
-			}
-
-			updateCounts(&lowPulses, &highPulses, signal)
-			newSignal, err := module.Send(signal)
-			if err != nil {
-				continue
-			}
-
-			
-
-			for _, nextModuleName := range module.Destinations {
-				
-				updateCounts(&lowPulses, &highPulses, newSignal)
-				sendData.Name = nextModuleName
-				sendData.Signal = newSignal
-				nextQ.Add(sendData)
-				fmt.Printf("  ADDING -> %s <%s>\n", nextModuleName, newSignal.Status)
-			}
+		nextModule, err := modules.Get(nextModuleName)
+		
+		if nextModuleName == "rx" && signal.Status == utils.Low {
+			fmt.Println("FOUND")
+			return true
 		}
-		fmt.Println("_______________")
-		q.List = nextQ.List
-	}
-	return lowPulses, highPulses
-}
+		if err != nil {
+			continue
+		}
+		
+		nextSignal := utils.Signal{}
+		
+		if nextModule.GetType() == "Conjunction" {
+			nextSignal, err = nextModule.Send(signal, moduleName)
+		} else {
+			nextSignal, err = nextModule.Send(signal)
+		}
+		
+		if err != nil {
+			continue
+		}
+		
+		nextSignals = append(nextSignals, nextSignal)
+		nextModuleNames = append(nextModuleNames, nextModuleName)
 
+	}
+
+	status := false
+	for idx := 0; idx < len(nextSignals); idx++ {
+
+		sig := nextSignals[idx]
+		nam := nextModuleNames[idx]
+		status = handleBtnPress2(sig, nam, modules)
+		if status {
+			return status
+		}
+	
+	}
+	return false
+}
