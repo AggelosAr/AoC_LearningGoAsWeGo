@@ -103,30 +103,20 @@ func solvePart1(modules utils.Modules) int {
 	return lowPulses * highPulses
 }
 
-//2nd example out of order ?!?!?maybe
+
 // recurse in reverse
 func solvePart2() int {
 	
-	name := "broadcaster"
 	signal := utils.NewSignal("low")
-	
+	name := "rx"
 	modules := getData()
-	btmPresses := 0
 	
-	for {
-		//modules := getData()
-		status := handleBtnPress2(signal, name, &modules)
-		btmPresses += 1
-		if status {
-			break
-		}
-	}
-
+	
+	btmPresses := findMinBtnPresses(signal, name, modules)
+		
 	fmt.Println("PRESSES -> ", btmPresses)
 	return btmPresses
 }
-
-
 
 
 
@@ -194,7 +184,90 @@ func handleBtnPress(signal utils.Signal, moduleName string, modules utils.Module
 }
 
 
-func handleBtnPress2(signal utils.Signal, moduleName string, modules *utils.Modules) bool {
+// We need to find the rx node
+// Then go in reverse from that node 
+
+func findMinBtnPresses(trgtSignal utils.Signal, trgtModName string, modules utils.Modules ) int {
+	
+	// if destination == Conjunction
+	// gather all and find min
+	targetModule, err := modules.Get(trgtModName)
+	mustGatherMemory := false
+	if err == nil {
+		if targetModule.GetType() == "Conjunction" {
+			mustGatherMemory = true
+		}
+	}
+	
+	nextSignals := []utils.Signal {}
+	nextModuleNames := []string {}
+
+	for srcName, source := range modules.Modules {
+
+		for _, destModName := range source.Destinations {
+
+			if destModName == trgtModName {
+
+				newS := utils.NewSignal("low")
+				fmt.Printf(" <%s> -%s-> <%s>\n",srcName, trgtSignal.Status, trgtModName)
+				if source.GetType() == "Conjunction" {
+
+					if trgtSignal.Status == utils.Low {
+						// all inputs are high -> low
+						//all memory hight
+						newS.Status = utils.High
+					} 
+				} 
+				nextSignals = append(nextSignals, newS)
+				nextModuleNames = append(nextModuleNames, srcName)
+				if !mustGatherMemory {
+					break
+				}
+
+			}
+		}
+	}
+
+	steps := 0
+
+	
+	// add all thse nodes to visited and send the signal
+	//start fliping until we get the correct ?
+
+
+	for idx := 0; idx < len(nextSignals); idx++ {
+		nextSig := nextSignals[idx]
+		nextName := nextModuleNames[idx]
+		/*
+		name := "broadcaster"
+		signal := utils.NewSignal("low")
+		status := false
+
+		
+		presses := 0
+		for {
+			presses += 1
+			status = pressBtm(signal, nextSig, name, nextName, modules)
+			if status {
+				break
+			}
+		}
+		*/
+		steps = max(steps, findMinBtnPresses(nextSig, nextName, modules)) 
+
+	
+	}
+	
+	if len(nextSignals) == 0 {
+		return 0
+	}
+
+	return steps
+	
+}
+
+
+func pressBtm(signal, trgSig utils.Signal, moduleName, trgModName string, modules utils.Modules) bool {
 	
 	// stopping conditions
 	module, err := modules.Get(moduleName)
@@ -207,11 +280,17 @@ func handleBtnPress2(signal utils.Signal, moduleName string, modules *utils.Modu
 	for _, nextModuleName := range module.Destinations {
 
 		nextModule, err := modules.Get(nextModuleName)
+		//fmt.Printf(" <%s> -%s-> <%s>\n",moduleName, signal.Status, nextModuleName)
 		
-		if nextModuleName == "rx" && signal.Status == utils.Low {
-			fmt.Println("FOUND")
+		if trgSig.Status == signal.Status && trgModName == nextModuleName {
+			fmt.Printf(" <%s> -%s-> <%s>\n",moduleName, signal.Status, nextModuleName)
 			return true
 		}
+		if trgSig.Status != signal.Status && trgModName == nextModuleName {
+			fmt.Printf(" <%s> -%s-> <%s>\n",moduleName, signal.Status, nextModuleName)
+			return false
+		}
+		
 		if err != nil {
 			continue
 		}
@@ -238,11 +317,13 @@ func handleBtnPress2(signal utils.Signal, moduleName string, modules *utils.Modu
 
 		sig := nextSignals[idx]
 		nam := nextModuleNames[idx]
-		status = handleBtnPress2(sig, nam, modules)
+		status = pressBtm(sig, trgSig, nam, trgModName, modules) 
+
 		if status {
-			return status
+			return true
 		}
 	
+	
 	}
-	return false
+	return status
 }

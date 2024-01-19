@@ -214,3 +214,12 @@ func (s *Signal) Flip() {
 }
 
 
+func (s Signal) FlipNewSig() Signal {
+	newSignal := NewSignal("low")
+	if s.Status == Low {
+		newSignal.Status = High
+		return newSignal
+	}
+	return newSignal
+}
+
