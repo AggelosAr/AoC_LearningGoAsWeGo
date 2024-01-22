@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"aggelos.com/go/aoc/ex20/utils"
+	"aggelos.com/go/aoc/ex21/utils"
 )
 
 

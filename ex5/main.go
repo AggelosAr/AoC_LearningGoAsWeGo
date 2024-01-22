@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,9 +17,7 @@ import (
 func main() {
 
 	rawData := getData()
-
 	seeds, maps := getFormattedData(rawData)
-
 
 	// 0 s
 	start := time.Now()
@@ -28,7 +27,7 @@ func main() {
 	fmt.Println("The result is PART1 : ", part1Solution)
 	fmt.Println("__________________________")
 
-
+	/*
 	// 8 s
 	start = time.Now()
 	part1SolutionReverse := solveInReverse(seeds, maps)
@@ -37,7 +36,6 @@ func main() {
 	fmt.Println("The result is PART1 : ", part1SolutionReverse)
 	fmt.Println("__________________________")
 
-	/*
 	// 4.20 mins
 	start = time.Now()
 	part2Solution := solverPart2(seeds, maps)
@@ -63,20 +61,17 @@ func main() {
 	fmt.Println("The result is PART2 : ", part2Solution)
 	fmt.Println("__________________________")
 
-	if 2008785 == part2Solution {
+	if 88151870 == part1Solution &&  2008785 == part2Solution {
 		fmt.Println(" N I C E ")
 	} else {
 		fmt.Println(" B A D ")
 	}
-
-	
-	
 }
 
 
-func getDataPath() string{
-	wd, _ := os.Getwd()
-	return wd + "\\data\\input.txt"
+func getDataPath() string {
+	rootPath, _ := os.Getwd()
+	return filepath.Join(rootPath, "data", "input.txt")
 }
 
 
@@ -126,7 +121,7 @@ func extractNumbers(text string) []int {
 	return numbers
 }
 
-func extractTriplets(text string) [][]int{
+func extractTriplets(text string) [][]int {
 
 	// here is all the numbers
 	rightPart := strings.Split(text, ":")[1]
@@ -162,7 +157,7 @@ func getFormattedData(rawData []string) ([] int, [][][]int) {
 }
 
 
-func solverPart1(seeds []int, maps[][][]int) int{
+func solverPart1(seeds []int, maps[][][]int) int {
 	
 	minimumLocation := math.MaxInt64
 
@@ -191,16 +186,13 @@ func iterateMaps(seed int, maps [][][]int) int {
 				break
 			}
 		}
-		
 	}
 
 	return searching
 }
 
 
-
-
-func solverPart2(seeds []int, maps[][][]int) int{
+func solverPart2(seeds []int, maps[][][]int) int {
 	
 	minimumLocation := math.MaxInt64
 
@@ -212,8 +204,8 @@ func solverPart2(seeds []int, maps[][][]int) int{
 		for j := 0; j < seedRange; j++ {
 			minimumLocation = min(minimumLocation, iterateMaps(seed + j, maps))
 		}
-		
 	}
+
 	return minimumLocation
 }
 
@@ -256,7 +248,6 @@ func solverPart2Routines(seeds []int, maps [][][]int) int {
 
 func solveInReverse(seeds []int, maps [][][]int) int {
 
-
 	// make seeds a set
 	seedsSet := map[int]struct{}{}
 
@@ -274,7 +265,6 @@ func solveInReverse(seeds []int, maps [][][]int) int {
 		}
 		
 		location++
-
 	} 
 
 	fmt.Println("Error -- this should never happen -- assuming valid data")
@@ -284,7 +274,6 @@ func solveInReverse(seeds []int, maps [][][]int) int {
 func iterateMapsInRevrse(location int, maps [][][]int) int {
 
 	searching := location
-	//fmt.Println("FROM : ", location)
 	for i := len(maps) - 1; i > -1; i-- {
 		
 		for _, ranger := range  maps[i] {
@@ -299,7 +288,6 @@ func iterateMapsInRevrse(location int, maps [][][]int) int {
 				break
 			}
 		}
-		//fmt.Println("TO : ", searching)
 	}
 	return searching
 }
@@ -332,8 +320,6 @@ func solveInReversePart2(seeds []int, maps [][][]int) int {
 				return location
 			}
 		}
-
-		//fmt.Printf("Location <%d> --- <%0.2f>\n", location, float64(location) / 2008785 * 100)
 		location++
 	} 
 
@@ -345,4 +331,3 @@ func solveInReversePart2(seeds []int, maps [][][]int) int {
 
 // implement sorted map ?!
 // then do binary search for finding in which range inside the mapper is
-// should go

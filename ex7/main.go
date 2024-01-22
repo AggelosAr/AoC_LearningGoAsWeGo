@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 
 func main() {
+	
 	data := readData()
 	hands := formatData(data)
 
@@ -28,60 +30,6 @@ func main() {
 	} else {
 		fmt.Println(" B A D ")
 	}
-}
-
-
-func getRootPath() string {
-	path, _ := os.Getwd()
-	return path + "\\data\\input.txt"
-}
-
-
-func readData() string {
-
-	file, err := os.Open(getRootPath())
-	if err != nil {
-		fmt.Println("Error opening the file : ", err)
-	}
-
-	scanner := bufio.NewScanner(file)
-
-	data := ""
-	for scanner.Scan() {
-		line := scanner.Text()
-		data += line + "\n"
-	}
-	return data
-}
-
-
-func formatData(text string) []handutils.Hand {
-	rawHands := strings.Split(text, "\n")
-	return formatHands(rawHands)
-}
-
-
-func formatHands(rawHands []string) []handutils.Hand {
-
-	var hands []handutils.Hand 
-
-	currentHand := handutils.Hand{}
-	for _, hand := range rawHands {
-
-		handParts := strings.Fields(hand)
-		// Ignore the last new Line
-		if len(handParts) == 0 {
-			break
-		}
-
-		currentHand.Cards = handParts[0]
-		num, _ := strconv.Atoi(handParts[1])
-
-		currentHand.Bid = num
-
-		hands = append(hands, currentHand)
-	}
-	return hands
 }
 
 
@@ -119,4 +67,56 @@ func solver(hands []handutils.Hand, isJWild bool) int {
 		winnings += currentWinnings
 	}
 	return winnings
+}
+
+
+
+func getRootPath() string {
+	rootPath, _ := os.Getwd()
+	return filepath.Join(rootPath, "data", "input.txt")
+}
+
+func readData() string {
+
+	file, err := os.Open(getRootPath())
+	if err != nil {
+		fmt.Println("Error opening the file : ", err)
+	}
+
+	scanner := bufio.NewScanner(file)
+
+	data := ""
+	for scanner.Scan() {
+		line := scanner.Text()
+		data += line + "\n"
+	}
+	return data
+}
+
+func formatData(text string) []handutils.Hand {
+	rawHands := strings.Split(text, "\n")
+	return formatHands(rawHands)
+}
+
+func formatHands(rawHands []string) []handutils.Hand {
+
+	var hands []handutils.Hand 
+
+	currentHand := handutils.Hand{}
+	for _, hand := range rawHands {
+
+		handParts := strings.Fields(hand)
+		// Ignore the last new Line
+		if len(handParts) == 0 {
+			break
+		}
+
+		currentHand.Cards = handParts[0]
+		num, _ := strconv.Atoi(handParts[1])
+
+		currentHand.Bid = num
+
+		hands = append(hands, currentHand)
+	}
+	return hands
 }

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -41,8 +42,8 @@ func main() {
 
 
 func getRootPath() string{
-	path, _ := os.Getwd()
-	return path + "\\data\\input.txt"
+	rootPath, _ := os.Getwd()
+	return filepath.Join(rootPath, "data", "input.txt")
 }
 
 
@@ -60,6 +61,7 @@ func readData() string {
 		line := scanner.Text()
 		data += line + "\n"
 	}
+
 	return data
 }
 
@@ -84,6 +86,7 @@ func extractNumbers(text string) []int {
 		}
 		extractedNumbers = append(extractedNumbers, number)
 	}
+
 	return extractedNumbers
 }
 
@@ -95,18 +98,22 @@ func solverPart1(times []int, distances []int) int {
 	for race := 0; race < len(times); race++ {
 		totalWays *= findWays(times[race], distances[race])
 	}
+
 	return totalWays
 }
 
 
 func findWays(time int, distance int) int {
 
-	ways := 0
-	reachedWin := false
-
+	var (
+		ways = 0
+		reachedWin = false
+	)
+	
 	for speed := 0; speed < time; speed++ {
 		
 		potentialDistance := getDistanceTravelled(speed, time, distance)
+
 		if potentialDistance > distance {
 			ways += 1
 			reachedWin = true
@@ -124,10 +131,8 @@ func findWays(time int, distance int) int {
 
 
 func solverPart2(times []int, distances []int) int {
-
 	singletTime := concatIntArrayToSingleNumber(times)
 	singleDistance := concatIntArrayToSingleNumber(distances)
-	
 	return findWays(singletTime, singleDistance)
 }
 
@@ -152,7 +157,6 @@ func concatIntArrayToSingleNumber( arr []int ) int {
 
 
 func solverPart2WithBinarySearch(times []int, distances []int) int {
-
 	singletTime := concatIntArrayToSingleNumber(times)
 	singleDistance := concatIntArrayToSingleNumber(distances)
 	return findWaysWithBinSearch(singletTime, singleDistance)
@@ -168,18 +172,18 @@ func findWaysWithBinSearch(time int, distance int) int {
 
 func binarySearchLow(time int, targetDistance int) int{
 
-	lowSpeed := 0
-	hightSpeed := time
-
+	var (
+		lowSpeed = 0
+		hightSpeed = time
+	)
+	
 	for lowSpeed <= hightSpeed {
 		//currentSpeed := (lowSpeed + hightSpeed) / 2
 		currentSpeed := lowSpeed + ( hightSpeed - lowSpeed ) / 2
-
 		currentDistance := getDistanceTravelled(currentSpeed, time, targetDistance)
 		
 		if currentDistance < targetDistance {
 			lowSpeed = currentSpeed + 1
-			
 		} else {
 			hightSpeed = currentSpeed - 1
 		}
@@ -190,18 +194,18 @@ func binarySearchLow(time int, targetDistance int) int{
 
 func binarySearchHight(time int, targetDistance int) int{
 
-	lowSpeed := 0
-	hightSpeed := time
+	var (
+		lowSpeed = 0
+		hightSpeed = time
+	)
 
 	for lowSpeed <= hightSpeed {
-		//currentSpeed := (lowSpeed + hightSpeed) / 2
+		
 		currentSpeed := lowSpeed + ( hightSpeed - lowSpeed ) / 2
-
 		currentDistance := getDistanceTravelled(currentSpeed, time, targetDistance)
 		
 		if currentDistance < targetDistance {
 			hightSpeed = currentSpeed - 1
-			
 		} else {
 			lowSpeed = currentSpeed + 1
 		}
@@ -211,8 +215,5 @@ func binarySearchHight(time int, targetDistance int) int{
 
 
 func getDistanceTravelled(speed int, time int, distance int) int {
-
-	timeRemaining := time - speed
-	potentialDistance := speed * timeRemaining
-	return potentialDistance
+	return speed * (time - speed) // speed * remaining time
 }

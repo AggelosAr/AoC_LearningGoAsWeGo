@@ -6,63 +6,34 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"aggelos.com/go/aoc/ex3/utils"
 )
 
 
 func main() {
-	matrix := getMatrixFromData(getRootPath())
-	
-	fmt.Println("The result is PART1: ", solveMatrix(matrix))
+	matrix := getMatrixFromData()
 
-	fmt.Println("The result is PART2: ", solveMatrixPart2(matrix))
-}
+	part1Result := solveMatrix(matrix)
+	part2Result := solveMatrixPart2(matrix)
+	fmt.Println("The result is PART1: ", part1Result)
+	fmt.Println("The result is PART2: ", part2Result)
 
-
-func getRootPath() string{
-	rootPath, _ := os.Getwd()
-	rootPath += "\\data\\input.txt"
-	return rootPath
-}
-
-
-func getMatrixFromData(path string) [][]string{
-	file, err := os.Open(path)
-	if err != nil {
-		fmt.Println("Errot while opening the file:", err)
+	if 546563 == part1Result && 91031374 == part2Result {
+		fmt.Println("G O O D ")
 	}
-	defer file.Close()
-
-	matrix := formatFileTo2DMatrix(file)
-	return matrix
 }
 
-
-func formatFileTo2DMatrix(file *os.File) [][]string {
-	scanner := bufio.NewScanner(file)
-	var matrix [][]string
-	
-	for scanner.Scan() {
-		line := scanner.Text()
-		matrix = append(matrix, formatLine(line))		
-	}
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading file:", err)
-	}
-	return matrix
-}
-
-
-func formatLine(line string) []string{
-	return strings.Split(line, "")
-}
 
 
 func solveMatrix(matrix [][]string) int {
-	result := 0
 
-	rows := len(matrix)
-	cols := len(matrix[0])
-
+	var (
+		res = 0
+		rows = len(matrix)
+		cols = len(matrix[0])
+	)
+	
 	// We search to find numbers then look around to see if we will
 	// include that number
 	for i := 0; i < rows; i++ {
@@ -75,87 +46,93 @@ func solveMatrix(matrix [][]string) int {
 				continue
 			}
 
-			if lookAroundForSymbol([2]int{i, j}, rows, cols, matrix){
+			point := *utils.NewPoint(i, j)
+
+			if lookAroundForSymbol(matrix, point){
 				
 				before, after, jOffset := gatherNumber(matrix[i], j, cols)
-				//fmt.Printf("LINE <%d><%d> NUMBER <%d> HAS SYMBOL OFFSET<%d> -- BEFORE<%s> AFTER<%s>\n", i,j, number, jOffset, before, after)
-
-				j += jOffset
 				currentNumber := before + strconv.Itoa(number) + after
 				finalNumber, _ := strconv.Atoi(currentNumber)
-				result += finalNumber
+
+				j += jOffset
+				res += finalNumber
 				
 			}
 		}
 	}
 
-	return result
+	return res
 }
 
 
 func solveMatrixPart2(matrix [][]string) int {
-	result := 0
 
-	rows := len(matrix)
-	cols := len(matrix[0])
-
+	var (
+		result = 0
+		rows = len(matrix)
+		cols = len(matrix[0])
+	)
+	
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-
-			currentChar := matrix[i][j]
-			if isGear(currentChar){
-				result += lookAroundForNumbers([2]int{i, j}, rows, cols, matrix)
+			if matrix[i][j] == "*" {
+				point := *utils.NewPoint(i, j)
+				result += lookAroundForNumbers(matrix, point)
 			}
 		}
 	}
 	return result
 }
 
-var offsets = [8][2]int {{-1, -1}, {-1, 0}, {-1, 1},
-	{0, -1}, {0, 1}, // {0, 0} not needed WOW OPTIMIZATIONS K
-	{1, -1}, {1, 0}, {1, 1}}
 
+func lookAroundForSymbol(matrix [][]string, point utils.Point) bool{
 
-func lookAroundForSymbol(idx [2]int, rows int, cols int, matrix [][]string) bool{
+	var (
+		rows = len(matrix)
+		cols = len(matrix[0])
+	)
 
-	for _, offset := range offsets {
+	for _, offset := range utils.Offsets {
 
-		newX := idx[0] + offset[0]
-		newY := idx[1] + offset[1]
+		x := point.X + offset[0]
+		y := point.Y + offset[1]
 		
-		if checkLimits(newX, rows) && checkLimits(newY, cols) {
-			if isSymbol(matrix[newX][newY]) {
-				return true
-			}
+		currPoint := *utils.NewPoint(x, y)
+		if currPoint.IsValid(rows, cols) && isSymbol(matrix[x][y]) {
+			return true
+			
 		}
 	}
 	return false
 }
 
-type Point struct {
-	X, Y int
-}
 
-func lookAroundForNumbers(idx [2]int, rows int, cols int, matrix [][]string) int{
+func lookAroundForNumbers(matrix [][]string, point utils.Point) int{
 
-	result := 1
-	numbersFound := 0
+	var (
+		rows = len(matrix)
+		cols = len(matrix[0])
+		result = 1
+		numbersFound = 0
+		visitedSet = map[utils.Point]struct{}{}
+	)
 	
-	visitedSet := map[string]struct{}{}
+	for _, offset := range utils.Offsets {
 
-	for _, offset := range offsets {
-
-		newX := idx[0] + offset[0]
-		newY := idx[1] + offset[1]
+		x := point.X + offset[0]
+		y := point.Y + offset[1]
 		
-		currentIDX := Point{newX, newY}
-		if checkLimits(newX, rows) && checkLimits(newY, cols) {
-			number, err := strconv.Atoi(matrix[newX][newY])
+		currPoint := *utils.NewPoint(x, y)
+			
+		if currPoint.IsValid(rows, cols) {
+
+			number, err := strconv.Atoi(matrix[x][y])
 			if err != nil {
 				continue
 			}
 			
-			if isInVisitedSet(visitedSet, currentIDX) {
+			_, isVisited := visitedSet[currPoint]
+			if isVisited {
 				continue
 			}
 
@@ -165,7 +142,7 @@ func lookAroundForNumbers(idx [2]int, rows int, cols int, matrix [][]string) int
 			if numbersFound > 2{
 				return 0
 			}
-			before, after, jOffset := gatherNumber(matrix[newX], newY, cols)
+			before, after, jOffset := gatherNumber(matrix[x], y, cols)
 
 			// Handle jOffset so we don't double count numbers
 			// This will happen only on UP and DOWN
@@ -175,8 +152,8 @@ func lookAroundForNumbers(idx [2]int, rows int, cols int, matrix [][]string) int
 			// 11111
 
 			for k := 0; k < jOffset + 1; k++{
-				point := Point{newX, k + newY}
-				addToVisitedSet(visitedSet, point)
+				point := *utils.NewPoint(x, k + y)
+				visitedSet[point] = struct{}{}
 			}
 			
 			currentNumber := before + strconv.Itoa(number) + after
@@ -192,43 +169,16 @@ func lookAroundForNumbers(idx [2]int, rows int, cols int, matrix [][]string) int
 	return 0
 }
 
-//!
-func addToVisitedSet(visitedSet map[string]struct{}, point Point) {
-    key := fmt.Sprintf("(%d,%d)", point.X, point.Y)
-    visitedSet[key] = struct{}{}
-}
-//!
-func isInVisitedSet(visitedSet map[string]struct{}, point Point) bool {
-    key := fmt.Sprintf("(%d,%d)", point.X, point.Y)
-    _, exists := visitedSet[key]
-    return exists
-}
-
-
-
-
-func checkLimits( idx int, limit int) bool {
-	return -1 < idx && idx < limit
-}
-
-
-func isSymbol(char string) bool{
-	_, err := strconv.Atoi(char)
-	return err != nil && char != "." 
-}
-
-
-func isGear(char string) bool{
-	return char == "*" 
-}
-
 
 
 func gatherNumber(matrix []string, idx int, size int) (string, string, int) {
+	
+	var (
+		before = ""
+		after = ""
+		jOffset = 0
+	)
 	// go back until not number
-	before := ""
-	after := ""
-	jOffset := 0
 	//Dont include the current idx HENCE - 1
 	for i := idx - 1; i > -1; i-- {
 		_, err := strconv.Atoi(matrix[i])
@@ -237,7 +187,6 @@ func gatherNumber(matrix []string, idx int, size int) (string, string, int) {
 		}
 		before += matrix[i]
 	}
-
 	// go forward untill not number 
 	// add it 
 	// skip to forward
@@ -253,12 +202,42 @@ func gatherNumber(matrix []string, idx int, size int) (string, string, int) {
 	return reverseString(before), after, jOffset
 }
 
-//!
-func reverseString(input string) string {
-	runes := []rune(input)
+
+
+func isSymbol(char string) bool{
+	_, err := strconv.Atoi(char)
+	return err != nil && char != "." 
+}
+
+func reverseString(t string) string {
+	runes := []rune(t)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
-
 	return string(runes)
 }
+
+func getRootPath() string{
+	rootPath, _ := os.Getwd()
+	rootPath += "\\data\\input.txt"
+	return rootPath
+}
+
+func getMatrixFromData() [][]string{
+	path := getRootPath()
+	file, _ := os.Open(path)
+	defer file.Close()
+	return formatFileTo2DMatrix(file)
+}
+
+func formatFileTo2DMatrix(file *os.File) [][]string {
+	scanner := bufio.NewScanner(file)
+	var matrix [][]string
+	
+	for scanner.Scan() {
+		line := scanner.Text()
+		matrix = append(matrix, strings.Split(line, ""))		
+	}
+	return matrix
+}
+

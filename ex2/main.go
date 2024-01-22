@@ -4,122 +4,118 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
+	"path/filepath"
+	"time"
+
+	"aggelos.com/go/aoc/ex2/utils"
 )
 
 func main() {
 
-	rootPath, _ := os.Getwd()
-	rootPath += "\\data\\input.txt"
-
-	file, err := os.Open(rootPath)
-	if err != nil {
-        fmt.Println("Error opening file:", err)
-        return
-    }
-    defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	result := 0
-	for scanner.Scan() {
-
-		line := scanner.Text()
-		
-		id, game := formatLineToArray(line)
-		/* PART 1
-		if checkGame(game){
-			result += id
-			fmt.Println(id, game)
-		}
-		*/
-		// PART 2
-		id ++ // silence it 
-		result += findPower(game)
-
+	games := getData()
+	
+	start := time.Now()
+	part1result := solvePart1(games)
+	elapsed := time.Since(start)
+	fmt.Printf("Time took %s\n", elapsed)
+	fmt.Println("PART1 - RESULT - ", part1result)
+	
+	start = time.Now()
+	part2result := solvePart2(games)
+	elapsed = time.Since(start)
+	fmt.Printf("Time took %s\n", elapsed)
+	fmt.Println("PART2 - RESULT - ", part2result)
+	
+	if part1result == 2176 && part2result == 63700 {
+		fmt.Println(" G O O D ")
+	} else {
+		fmt.Println(" B A D ")
 	}
-	fmt.Printf("The result is : %d\n", result)
 
 }
 
 
-func formatLineToArray(line string) (int, []string) {
-	tempData := strings.Split(line, ":")
-	tempId := strings.Split(tempData[0], " ")[1]
-	id, _ := strconv.Atoi(tempId)
-	gameData := tempData[1]
-	game := strings.Split(gameData, ";")
-	return id, game
-}
-
-func checkGame(game []string) bool {
-	redMust := 12
-	greenMust := 13
-	blueMust := 14
-
-	// [ "3 blue, 4 red" ,  "3 blue, 4 red" ]
-	for _, turn := range game {
-		// ["3 blue", "4 red"]
-		
-		balls := strings.Split(turn, ",")
-		
-		for _, ball := range balls {
-			trimmedBall := strings.TrimSpace(ball)
-			tempBall := strings.Split(trimmedBall, " ")
-			
-			number, _ := strconv.Atoi(tempBall[0])
-			color := tempBall[1]
-
-			if color == "red" && number > redMust{
-				return false
-			}else if color == "green" && number > greenMust{
-				return false
-			}else if color == "blue" && number > blueMust{
-				return false
-			}
+func solvePart1(games []utils.Game) int {
+	r := 0
+	for id, game := range games {
+		if checkGame(game){
+			r += id + 1
 		}
+	}
+	return r
+}
 
+
+func solvePart2(games []utils.Game) int {
+	r := 0
+	for _, game := range games {
+		r += findPower(game)
+	}
+	return r
+}
+
+
+func checkGame(game utils.Game) bool {
+
+	var (
+		redMust = 12
+		greenMust = 13
+		blueMust = 14
+	)
+	
+	for _, turn := range game.Turns {
+		if turn.R > redMust{
+			return false
+		}else if turn.G > greenMust{
+			return false
+		}else if turn.B > blueMust{
+			return false
+		}
 	}
 
 	return true
 }
 
 
-type maxColors struct {
-	red int
-	green int
-	blue int 
-}
-func findPower(game []string) int {
+
+func findPower(game utils.Game) int {
 	
+	colors := utils.NewColors()
 
-	currentColors := maxColors{}
-	// [ "3 blue, 4 red" ,  "3 blue, 4 red" ]
-	for _, turn := range game {
-		// ["3 blue", "4 red"]
+	for _, turn := range game.Turns {
+		colors.R = max(colors.R, turn.R)
+		colors.G = max(colors.G, turn.G)
+		colors.B = max(colors.B, turn.B)
 		
-		balls := strings.Split(turn, ",")
+	}
+	return colors.R * colors.G * colors.B
+}
 
+
+func getFilePath() string {
+	rootPath, _ := os.Getwd()
+	return filepath.Join(rootPath, "data", "input.txt")
+}
+
+
+func getData() []utils.Game { 
+
+	file, err := os.Open(getFilePath())
+	if err != nil {
+		fmt.Println("Error opening file : ", err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+
+	games := []utils.Game {}
+
+	for scanner.Scan() {
+		line := scanner.Text()
 		
-		
-		for _, ball := range balls {
-			trimmedBall := strings.TrimSpace(ball)
-			tempBall := strings.Split(trimmedBall, " ")
-			
-			number, _ := strconv.Atoi(tempBall[0])
-			color := tempBall[1]
-
-			if color == "red"{
-				currentColors.red = max(number, currentColors.red)
-			}else if color == "green" {
-				currentColors.green = max(number, currentColors.green)
-			}else if color == "blue"{
-				currentColors.blue = max(number, currentColors.blue)
-			}
-		}
-
+		game := utils.NewGame(line)
+		games = append(games, *game)
 	}
 
-	return currentColors.red * currentColors.green * currentColors.blue
+	return games
 }
+
